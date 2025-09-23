@@ -48,9 +48,17 @@ async def ghost_client() -> AsyncGenerator[GhostClient, None]:
         yield client
 
 
+_tools_registered = False
+
 @pytest.fixture
 def mcp_server():
     """Provide the MCP server instance."""
+    global _tools_registered
+    if not _tools_registered:
+        from ghost_mcp.server import register_tools
+        # Ensure tools are registered for testing
+        register_tools()
+        _tools_registered = True
     return mcp
 
 
@@ -267,9 +275,9 @@ class BaseE2ETest:
         """Auto-use the Ghost running check."""
         pass
 
-    def get_mcp_tool(self, mcp_server, tool_name: str):
+    async def get_mcp_tool(self, mcp_server, tool_name: str):
         """Get an MCP tool by name from the server."""
-        tools = {tool.name: tool for tool in mcp_server.tools}
+        tools = await mcp_server.get_tools()
         if tool_name not in tools:
             available_tools = list(tools.keys())
             raise ValueError(f"Tool '{tool_name}' not found. Available tools: {available_tools}")
@@ -277,5 +285,13 @@ class BaseE2ETest:
 
     async def call_mcp_tool(self, mcp_server, tool_name: str, **kwargs):
         """Call an MCP tool with the given arguments."""
-        tool = self.get_mcp_tool(mcp_server, tool_name)
-        return await tool.func(**kwargs)
+        tool = await self.get_mcp_tool(mcp_server, tool_name)
+        result = await tool.run(kwargs)
+        # Return the text content if it's a ToolResult with content list, otherwise return as-is
+        if hasattr(result, 'content') and isinstance(result.content, list) and len(result.content) > 0:
+            if hasattr(result.content[0], 'text'):
+                return result.content[0].text
+            return result.content[0]
+        elif hasattr(result, 'content'):
+            return result.content
+        return result

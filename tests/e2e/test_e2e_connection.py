@@ -19,7 +19,7 @@ class TestConnectionE2E(BaseE2ETest):
         status = json.loads(result)
 
         # Verify connection status
-        assert status["ghost_url"] == "http://localhost:2368"
+        assert status["ghost_url"] == "http://localhost:2368/"
         assert status["content_api_configured"] is True
         assert status["admin_api_configured"] is True
         assert status["connection_test"] == "completed"
