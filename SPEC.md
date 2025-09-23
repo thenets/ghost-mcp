@@ -431,7 +431,12 @@ volumes:
 
 ## Configuration
 
-The MCP server should support configuration via:
+The MCP server uses a priority-based configuration system:
+
+### Configuration Precedence (Highest to Lowest)
+1. **Environment Variables** - Direct system environment variables
+2. **`./.env` File** - Local environment file in project root
+3. **Default Values** - Built-in fallback defaults
 
 ### Environment Variables
 - `GHOST_URL`: Ghost instance URL (default: http://localhost:2368)
@@ -440,24 +445,27 @@ The MCP server should support configuration via:
 - `GHOST_VERSION`: API version (default: v5.0)
 - `MCP_GHOST_MODE`: Operation mode - "readonly", "readwrite", or "auto" (default: "auto")
 
-### Configuration File
-Alternative JSON configuration file:
-```json
-{
-  "ghost": {
-    "url": "http://localhost:2368",
-    "contentApiKey": "your-content-api-key",
-    "adminApiKey": "your-admin-api-key",
-    "version": "v5.0",
-    "mode": "readwrite"
-  }
-}
+### .env File Example
+Create a `./.env` file in the project root:
+```env
+GHOST_URL=http://localhost:2368
+GHOST_CONTENT_API_KEY=your-content-api-key
+GHOST_ADMIN_API_KEY=your-admin-api-key
+GHOST_VERSION=v5.0
+MCP_GHOST_MODE=readwrite
 ```
 
 ### Operation Modes
 - **readonly**: Only Content API tools are available (requires Content API key)
 - **readwrite**: All tools available (requires both Content and Admin API keys)
 - **auto**: Automatically detects available keys and enables appropriate tools
+
+### Configuration Loading Process
+1. Load built-in default values
+2. Read and merge `./.env` file (if exists)
+3. Override with environment variables (if set)
+4. Validate required configuration is present
+5. Initialize appropriate API clients based on available keys
 
 ## Implementation Details
 
@@ -598,13 +606,22 @@ Before proceeding with implementation, please clarify the following:
 - **Authentication**: Single retry after token refresh
 - **Network**: Progressive timeout increases
 
-### 3. Configuration Management
-- **Question**: How should the Ghost instance URL and API keys be configured?
-- **Options**:
-  - Environment variables only
-  - Configuration file only
-  - Both (with precedence order)
-  - Runtime configuration via MCP parameters
+### 3. Configuration Management ✅ RESOLVED
+- **Decision**: Environment variables have priority, then `./.env` file
+- **Configuration Precedence** (highest to lowest):
+  1. **Environment Variables** - Direct system environment variables
+  2. **`./.env` File** - Local environment file in project root
+  3. **Default Values** - Fallback defaults for optional settings
+
+#### Configuration Loading Process:
+1. Load default configuration values
+2. Read and parse `./.env` file (if exists)
+3. Override with actual environment variables
+4. Validate required configuration is present
+
+#### Required vs Optional Variables:
+- **Required**: `GHOST_URL`, `GHOST_CONTENT_API_KEY` or `GHOST_ADMIN_API_KEY` (at least one)
+- **Optional**: `GHOST_VERSION`, `MCP_GHOST_MODE`, logging settings
 
 ### 4. Additional Features
 - **Question**: Are there any additional features beyond basic CRUD operations?
