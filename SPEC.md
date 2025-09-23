@@ -345,11 +345,27 @@ The following MCP tools provide full read/write access to Ghost content via the 
   - Returns: Success confirmation
 
 ### Common Parameters
+All tools support comprehensive filtering and pagination:
+
 - `limit`: Number of resources to return (default: 15, max: 50)
 - `page`: Page number for pagination (default: 1)
-- `filter`: Filter string using Ghost's filtering syntax
-- `include`: Comma-separated list of related resources to include
-- `fields`: Comma-separated list of fields to return
+- `filter`: Filter string using Ghost's filtering syntax (Phase 1: basic filters, Phase 2: advanced syntax)
+- `include`: Comma-separated list of related resources to include (e.g., "tags,authors")
+- `fields`: Comma-separated list of fields to return (e.g., "id,title,slug,published_at")
+
+#### Filtering Examples (Phase 1 Support)
+- `filter=featured:true` - Get featured posts
+- `filter=status:published` - Get published content
+- `filter=tag:news` - Get posts with "news" tag
+- `filter=author:john-doe` - Get content by specific author
+
+#### Advanced Filtering (Phase 2 - Future Implementation)
+- Complex queries with operators (`+`, `>`, `<`, etc.)
+- Multiple filter combinations
+- Date range filtering
+- Full-text search capabilities
+
+**Note**: Advanced filter strings will be passed directly to Ghost API as stubs until Phase 2 implementation.
 
 ## Docker Compose Setup
 
@@ -489,14 +505,18 @@ ghost-mcp/
 - **zod** for runtime type validation
 - **dotenv** for environment variable management
 - **multer** or equivalent for file upload handling
+- **winston** or **pino** for structured logging
+- **uuid** for request ID generation
 
 ### Error Handling
-- Validate all input parameters using Zod schemas
-- Handle Ghost API errors gracefully with meaningful messages
-- Implement retry logic for transient network errors
-- Return proper MCP error responses with error codes
-- Handle authentication failures for both Content and Admin APIs
-- Graceful degradation when only one API key is available
+- **Comprehensive Error Coverage**: Handle all error categories (network, auth, API, MCP, file upload)
+- **Mandatory Logging**: Structured JSON logs with required fields for all operations
+- **Parameter Validation**: Use Zod schemas with detailed validation error messages
+- **Retry Logic**: Exponential backoff for transient errors, respect rate limits
+- **Authentication Handling**: JWT refresh for Admin API, graceful Content API fallback
+- **MCP Error Responses**: Proper error codes and user-friendly messages
+- **Security**: Never log sensitive data (API keys, tokens, personal info)
+- **Monitoring**: Request IDs for tracing, performance metrics logging
 
 ### Testing Strategy
 - Unit tests for individual tools and utilities
@@ -514,18 +534,69 @@ ghost-mcp/
 
 Before proceeding with implementation, please clarify the following:
 
-### 1. Filtering and Pagination
-- **Question**: Should all Ghost API filtering/pagination options be exposed as tool parameters?
-- **Impact**: More parameters provide flexibility but increase complexity
-- **Options**:
-  - Full parameter exposure (complete flexibility)
-  - Simplified parameter set (easier to use)
-  - Progressive enhancement (start simple, add more later)
+### 1. Filtering and Pagination ✅ RESOLVED
+- **Decision**: Both filtering and pagination must be fully supported
+- **Implementation Strategy**:
+  - Start with core filtering/pagination parameters for initial implementation
+  - Add stubs for complex Ghost filtering syntax that can be implemented later
+  - Ensure all tools support basic `limit`, `page`, `filter`, `include`, and `fields` parameters
+- **Approach**:
+  - **Phase 1**: Basic filtering (simple field=value filters) and standard pagination
+  - **Phase 2 (Future)**: Advanced Ghost filtering syntax (complex queries, operators)
+  - **Stub Implementation**: Accept advanced filter strings but pass them directly to Ghost API
 
-### 2. Error Handling Strategy
-- **Question**: Any specific error handling or retry logic requirements?
-- **Impact**: Affects reliability and user experience
-- **Considerations**: Network timeouts, rate limits, API downtime
+### 2. Error Handling Strategy ✅ RESOLVED
+- **Decision**: Comprehensive error handling with mandatory detailed logging
+- **Requirements**:
+  - Handle all possible error scenarios
+  - Output comprehensive logs for debugging and monitoring
+  - Implement appropriate retry logic for transient failures
+  - Graceful degradation when services are unavailable
+
+#### Error Categories to Handle:
+1. **Network Errors**
+   - Connection timeouts
+   - DNS resolution failures
+   - Network connectivity issues
+   - SSL/TLS certificate problems
+
+2. **Authentication Errors**
+   - Invalid API keys (Content/Admin)
+   - JWT token generation failures
+   - Token expiration
+   - Permission denied errors
+
+3. **Ghost API Errors**
+   - Rate limiting (429 status)
+   - Server errors (5xx status)
+   - Client errors (4xx status)
+   - Invalid request format
+   - Resource not found (404)
+   - Validation errors
+
+4. **MCP Protocol Errors**
+   - Invalid tool parameters
+   - Schema validation failures
+   - Unsupported operations
+
+5. **File Upload Errors**
+   - File size limits exceeded
+   - Unsupported file types
+   - Storage failures
+
+#### Logging Requirements:
+- **Log Level**: DEBUG, INFO, WARN, ERROR
+- **Log Format**: Structured JSON with timestamps
+- **Required Fields**:
+  - `timestamp`, `level`, `tool_name`, `operation`, `error_code`, `error_message`, `request_id`, `ghost_api_response`, `retry_count`, `user_context`
+- **Sensitive Data**: Never log API keys or personal information
+- **Log Destinations**: Console (development), File/Service (production)
+
+#### Retry Logic:
+- **Transient Errors**: 3 retries with exponential backoff
+- **Rate Limits**: Respect retry-after headers
+- **Authentication**: Single retry after token refresh
+- **Network**: Progressive timeout increases
 
 ### 3. Configuration Management
 - **Question**: How should the Ghost instance URL and API keys be configured?
