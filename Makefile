@@ -1,6 +1,6 @@
 # Ghost MCP Development Makefile
 
-.PHONY: help install install-local deps-install-python deps-install-dev deps-deps-install-uv install-pip venv start-ghost stop-ghost restart-ghost setup-tokens test test-unit test-integration test-coverage test-fast test-parallel test-connection clean-test run dev format lint clean logs status check-deps setup docs
+.PHONY: help install install-local deps-install-python deps-install-dev deps-deps-install-uv install-pip venv start-ghost stop-ghost restart-ghost setup-tokens test test-unit test-integration test-coverage test-fast test-parallel test-e2e test-connection clean-test run dev format lint clean logs status check-deps setup docs
 
 .PHONY: help
 help: ## Show this help message
@@ -113,6 +113,15 @@ test-fast: ## Run tests with fail-fast and short traceback
 
 test-parallel: ## Run tests in parallel
 	uv run pytest tests/ -n auto
+
+test-e2e: ## Run end-to-end tests against real Ghost instance
+	@echo "🧪 Running end-to-end tests..."
+	@if [ ! -f .env ]; then \
+		echo "❌ .env file not found. Run 'make setup-tokens' first"; \
+		exit 1; \
+	fi
+	@echo "⚠️  Note: These tests require a running Ghost instance (make start-ghost)"
+	uv run pytest tests/e2e/ -v -m e2e
 
 test-connection: ## Test Ghost API connectivity
 	@if [ ! -f .env ]; then \

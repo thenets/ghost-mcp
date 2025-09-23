@@ -75,3 +75,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=ghost_mcp --cov-report=html --cov-report=term-missing"
 asyncio_mode = "auto"
+markers = [
+    "e2e: marks tests as end-to-end tests requiring real Ghost instance",
+    "admin: marks tests as requiring Ghost Admin API access",
+    "content: marks tests as requiring only Ghost Content API access"
+]
