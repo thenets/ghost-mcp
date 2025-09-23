@@ -1,24 +1,19 @@
 # Ghost MCP Development Makefile
 
-.PHONY: help install install-uv start-ghost stop-ghost setup-tokens test test-connection run dev clean logs status check-deps
+.PHONY: help install install-local deps-install-python deps-install-dev deps-deps-install-uv install-pip venv start-ghost stop-ghost restart-ghost setup-tokens test test-unit test-integration test-coverage test-fast test-parallel test-connection clean-test run dev format lint clean logs status check-deps setup docs
 
-# Default target
+.PHONY: help
 help: ## Show this help message
-	@echo "Ghost MCP Development Commands"
-	@echo "============================="
-	@echo ""
+	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
-	@echo ""
-	@echo "Quick start:"
-	@echo "  make install-uv     # Install uv package manager (if not installed)"
-	@echo "  make install        # Install Python dependencies"
-	@echo "  make start-ghost    # Start Ghost and database containers"
-	@echo "  make setup-tokens   # Extract API keys and create .env file"
-	@echo "  make test           # Test the implementation"
-	@echo "  make run            # Run the MCP server"
 
 # Python environment setup
-install-uv: ## Install uv package manager
+venv: ## Create a virtual environment
+	python3 -m venv venv
+	./venv/bin/pip install -U pip setuptools
+	./venv/bin/pip install -e ".[dev]"
+
+deps-deps-install-uv: ## Install uv package manager
 	@echo "📦 Installing uv package manager..."
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "✅ uv is already installed"; \
@@ -29,18 +24,34 @@ install-uv: ## Install uv package manager
 		echo "✅ uv installed successfully"; \
 	fi
 
-install: ## Install Python dependencies using uv
+# Install the MCP server system-wide
+install: ## Install the MCP server system-wide
+	claude mcp remove ghost-mcp -s user || true
+	claude mcp add ghost-mcp -s user -- \
+		bash -c "cd $(PWD) && uv run python -m ghost_mcp.server"
+
+# Install the MCP server in the project scope only
+install-local: ## Install the MCP server in the project scope only
+	claude mcp remove ghost-mcp || true
+	claude mcp add ghost-mcp -- \
+		bash -c "cd $(PWD) && uv run python -m ghost_mcp.server"
+
+deps-install-python: ## Install Python dependencies using uv
 	@echo "📦 Installing Python dependencies with uv..."
 	@if ! command -v uv >/dev/null 2>&1; then \
-		echo "❌ uv not found. Run 'make install-uv' first"; \
+		echo "❌ uv not found. Run 'make deps-deps-install-uv' first"; \
 		exit 1; \
 	fi
 	uv sync
 	@echo "✅ Dependencies installed successfully"
 
+# Install dev dependencies
+deps-install-dev: ## Install development dependencies
+	uv sync --extra dev
+
 install-pip: ## Install Python dependencies using pip (fallback)
 	@echo "📦 Installing Python dependencies with pip..."
-	python -m pip install -e .
+	python -m pip install -e ".[dev]"
 	@echo "✅ Dependencies installed successfully"
 
 # Docker environment
@@ -84,7 +95,25 @@ setup-tokens: ## Extract API keys from Ghost database and create .env file
 	@echo "🔑 Setting up API tokens..."
 	./scripts/setup-tokens.sh
 
-# Testing
+# Testing targets
+test: ## Run all tests
+	uv run pytest tests/ -v
+
+test-unit: ## Run unit tests only
+	uv run pytest tests/test_models.py tests/test_client.py -v
+
+test-integration: ## Run integration tests
+	uv run pytest tests/test_mcp_tools.py tests/test_server.py -v
+
+test-coverage: ## Run tests with coverage report
+	uv run pytest tests/ --cov=. --cov-report=html --cov-report=term
+
+test-fast: ## Run tests with fail-fast and short traceback
+	uv run pytest tests/ -x --tb=short
+
+test-parallel: ## Run tests in parallel
+	uv run pytest tests/ -n auto
+
 test-connection: ## Test Ghost API connectivity
 	@if [ ! -f .env ]; then \
 		echo "❌ .env file not found. Run 'make setup-tokens' first"; \
@@ -92,16 +121,9 @@ test-connection: ## Test Ghost API connectivity
 	fi
 	@python scripts/test-connection.py
 
-test: check-deps test-connection ## Run all tests
-	@echo "🧪 Running comprehensive tests..."
-	@echo "Testing MCP tools registration..."
-	@python -c "\
-import sys; \
-sys.path.insert(0, 'src'); \
-from ghost_mcp.server import mcp; \
-print(f'✅ FastMCP server initialized'); \
-print(f'   Tools registered: {len([attr for attr in dir(mcp) if not attr.startswith(\"_\")])}+')"
-	@echo "✅ All tests passed!"
+# Clean up test artifacts
+clean-test: ## Clean up test artifacts
+	rm -rf .coverage htmlcov/ .pytest_cache/ tests/__pycache__/ __pycache__/
 
 # Running the server
 run: check-deps ## Run the Ghost MCP server
@@ -165,17 +187,40 @@ check-deps: ## Check if all dependencies are available
 		exit 1; \
 	fi
 
-clean: ## Clean up development environment
+# Code quality
+.PHONY: format
+format: ## Format code with ruff and black
+	@echo "🎨 Formatting code..."
+	uv run ruff format .
+	uv run black .
+	@echo "✅ Code formatting completed"
+
+.PHONY: lint
+lint: ## Run linting with ruff and mypy
+	@echo "🔍 Running linters..."
+	uv run ruff check .
+	uv run mypy src/
+	@echo "✅ Linting completed"
+
+clean: ## Clean up temporary files and development environment
 	@echo "🧹 Cleaning up development environment..."
-	docker-compose down -v
-	rm -f .env
+	find . -type f -name "*.pyc" -delete || true
+	find . -type d -name "__pycache__" -delete || true
+	find . -type d -name ".pytest_cache" -delete || true
+	rm -rf .ruff_cache/ || true
+	rm -rf venv/ || true
+	rm -rf .pytest_cache/ || true
+	rm -rf htmlcov/ || true
+	rm -f .coverage* coverage.xml || true
+	docker-compose down -v || true
+	rm -f .env || true
 	@if command -v uv >/dev/null 2>&1; then \
 		uv clean; \
 	fi
 	@echo "✅ Cleanup complete"
 
 # Development workflow
-setup: install-uv install start-ghost setup-tokens ## Complete setup from scratch
+setup: deps-deps-install-uv deps-install-python start-ghost setup-tokens ## Complete setup from scratch
 	@echo ""
 	@echo "🎉 Ghost MCP setup complete!"
 	@echo ""
