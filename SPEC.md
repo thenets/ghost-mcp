@@ -344,6 +344,36 @@ The following MCP tools provide full read/write access to Ghost content via the 
   - Parameters: `id` (required string)
   - Returns: Success confirmation
 
+### Theme Admin Tools
+- **`ghost_admin_upload_theme`** - Upload a new theme
+  - Parameters: `file` (required file/base64), `activate?` (boolean)
+  - Returns: Theme upload result
+
+- **`ghost_admin_activate_theme`** - Activate an installed theme
+  - Parameters: `name` (required string)
+  - Returns: Activation result
+
+### Advanced Features (Stub Implementation)
+- **`ghost_admin_search_content`** - Search across all content (STUB)
+  - Parameters: `query` (required string), `content_types?` (array), `limit?` (number)
+  - Returns: Search results across posts, pages, etc.
+
+- **`ghost_admin_bulk_operation`** - Perform bulk operations (STUB)
+  - Parameters: `operation` (required string), `resource_type` (required string), `filters?` (object), `data?` (object)
+  - Returns: Bulk operation results
+
+- **`ghost_admin_site_analytics`** - Get site analytics data (STUB)
+  - Parameters: `metric` (required string), `date_range?` (object), `granularity?` (string)
+  - Returns: Analytics data
+
+- **`ghost_admin_export_content`** - Export site content (STUB)
+  - Parameters: `format?` (string), `include?` (array)
+  - Returns: Export data or download URL
+
+- **`ghost_admin_import_content`** - Import content to site (STUB)
+  - Parameters: `file` (required file/base64), `format?` (string), `options?` (object)
+  - Returns: Import results
+
 ### Common Parameters
 All tools support comprehensive filtering and pagination:
 
@@ -623,16 +653,44 @@ Before proceeding with implementation, please clarify the following:
 - **Required**: `GHOST_URL`, `GHOST_CONTENT_API_KEY` or `GHOST_ADMIN_API_KEY` (at least one)
 - **Optional**: `GHOST_VERSION`, `MCP_GHOST_MODE`, logging settings
 
-### 4. Additional Features
-- **Question**: Are there any additional features beyond basic CRUD operations?
-- **Examples**:
-  - Content search across posts/pages
-  - Bulk operations
-  - Content analytics/statistics
-  - Webhook support for real-time updates
+### 4. Additional Features ✅ RESOLVED
+- **Decision**: Everything available in the Ghost REST API must be covered
+- **Implementation Strategy**: If too complex, implement stubs for future development
 
-### 5. Development Environment
-- **Question**: Should the development setup include sample Ghost content for testing?
-- **Impact**: Makes testing and development easier but increases setup complexity
+#### Complete Ghost API Coverage Required:
+1. **Content Operations** (✅ Already Specified)
+   - Posts, Pages, Tags, Authors (CRUD operations)
+   - Draft management and publishing workflows
+   - Content copying and duplication
 
-Please provide guidance on these questions to ensure the implementation meets your specific needs and use cases.
+2. **Member Management** (✅ Already Specified)
+   - Member CRUD operations
+   - Subscription management
+   - Newsletter assignments
+
+3. **Media Management** (✅ Already Specified)
+   - Image and file uploads
+   - Media metadata management
+
+4. **Site Management** (✅ Already Specified)
+   - Settings configuration
+   - Tier/membership management
+   - Webhook management
+
+5. **Advanced Features** (⚠️ Stub Implementation Required)
+   - **Theme Management**: Upload, activate, delete themes
+   - **Site Analytics**: Traffic, member statistics (if available via API)
+   - **Content Search**: Full-text search across content
+   - **Bulk Operations**: Batch create/update/delete operations
+   - **Content Scheduling**: Advanced publishing schedules
+   - **Email Campaigns**: Newsletter creation and sending (if available)
+   - **Comment Management**: If Ghost comments API is available
+   - **Integration Management**: Third-party integrations
+   - **Site Migration**: Import/export functionality
+
+#### Stub Implementation Approach:
+- **Phase 1**: Core CRUD operations (already specified)
+- **Phase 2**: Advanced features with basic implementations
+- **Phase 3**: Full feature implementations
+
+**Note**: All Ghost REST API endpoints will be mapped to MCP tools, with complex features initially implemented as pass-through stubs to the Ghost API.
