@@ -1,0 +1,76 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ghost-mcp"
+version = "0.1.0"
+description = "Ghost CMS MCP server providing comprehensive Ghost API access"
+authors = [{name = "Ghost MCP Team"}]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "fastmcp>=0.2.0",
+    "requests>=2.31.0",
+    "pyjwt>=2.8.0",
+    "pydantic>=2.5.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=23.2.0",
+    "httpx>=0.25.0",
+    "typing-extensions>=4.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+    "hatchling>=1.21.0",
+]
+
+[project.scripts]
+ghost-mcp = "ghost_mcp.server:main"
+
+# Package discovery
+[tool.hatch.build.targets.wheel]
+packages = ["src/ghost_mcp"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+select = ["E", "F", "W", "I", "N", "UP", "ANN", "S", "BLE", "FBT", "B", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "ARG", "PTH", "TD", "FIX", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"]
+ignore = ["ANN101", "ANN102", "S101", "PLR0913", "PLR0915", "PLR2004"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=ghost_mcp --cov-report=html --cov-report=term-missing"
+asyncio_mode = "auto"
