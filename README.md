@@ -10,7 +10,7 @@ claude mcp add ghost --scope user \
   -e GHOST_URL=http://localhost:2368 \
   -e GHOST_CONTENT_API_KEY=your_key_here \
   -e GHOST_ADMIN_API_KEY=your_key_here \
-  -- uvx --refresh --from git+https://git.thenets.org/luiz/ghost-mcp.git ghost-mcp
+  -- uvx ghost-mcp
 ```
 
 ## 🌟 Getting Started
@@ -27,7 +27,7 @@ For most MCP clients, use this configuration:
       "args": [
         "--refresh",
         "--from",
-        "git+https://git.thenets.org/luiz/ghost-mcp.git",
+        "git+https://github.com/thenets/ghost-mcp.git",
         "ghost-mcp"
       ],
       "env": {
@@ -75,7 +75,7 @@ make setup  # This will start Ghost, create tokens, and configure everything
 
 ```bash
 # Clone the repository
-git clone https://git.thenets.org/luiz/ghost-mcp.git
+git clone https://github.com/thenets/ghost-mcp.git
 cd ghost-mcp
 
 # Complete setup from scratch
