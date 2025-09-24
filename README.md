@@ -2,6 +2,47 @@
 
 A comprehensive Model Context Protocol (MCP) server for Ghost CMS, providing both read-only Content API and read/write Admin API access through FastMCP.
 
+## 🌟 Getting Started
+
+First, install the Ghost MCP server with your client.
+
+Standard config works in most of the tools:
+
+```json
+{
+  "mcpServers": {
+    "ghost": {
+      "command": "uvx",
+      "args": [
+        "--refresh",
+        "--from",
+        "git+https://git.thenets.org/luiz/ghost-mcp.git",
+        "ghost-mcp"
+      ],
+      "env": {
+        "GHOST_URL": "http://localhost:2368",
+        "GHOST_CONTENT_API_KEY": "your_content_api_key_here",
+        "GHOST_ADMIN_API_KEY": "your_admin_api_key_here"
+      }
+    }
+  }
+}
+```
+
+### Creating API Keys
+
+To create the required API keys for your Ghost instance:
+
+1. **Content API Key**: In your Ghost admin panel, go to **Settings** → **Integrations** → **Add custom integration**
+2. **Admin API Key**: The same custom integration will provide both Content and Admin API keys
+3. Set the environment variables in your configuration as shown above
+
+For local development, you can use the automated setup:
+
+```bash
+make setup  # This will start Ghost, create tokens, and configure everything
+```
+
 ## 🎯 Features
 
 - **Complete Ghost API Coverage**: Both Content API (read-only) and Admin API (read/write)
