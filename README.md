@@ -4,14 +4,6 @@ A comprehensive Model Context Protocol (MCP) server for Ghost CMS, providing bot
 
 ## ⚡ Quick Start
 
-```bash
-# Install and run locally (requires Docker)
-git clone https://git.thenets.org/luiz/ghost-mcp.git
-cd ghost-mcp
-make setup  # Starts Ghost, creates API keys, runs tests
-make run    # Start the MCP server
-```
-
 For Claude Code:
 ```bash
 claude mcp add ghost --scope user \
