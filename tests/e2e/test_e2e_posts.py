@@ -736,8 +736,13 @@ class TestPostsAdminAPIE2E(BaseE2ETest):
             # Either it was successfully deleted or it couldn't be found (both acceptable)
             assert "error" in response
         else:
-            # If it's a success message, verify it contains expected keywords
-            assert "deleted" in result.lower() or "success" in result.lower()
+            # If it's a success response, it could be empty JSON or contain success keywords
+            if result.strip() == "{}":
+                # Empty response means successful delete
+                assert True
+            else:
+                # If it's a success message, verify it contains expected keywords
+                assert "deleted" in result.lower() or "success" in result.lower()
 
         # Verify post is no longer accessible (should return error)
         check_result = await self.call_mcp_tool(mcp_server, "get_post_by_id", post_id=post_id)

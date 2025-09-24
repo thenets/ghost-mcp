@@ -1,4 +1,4 @@
-"""Content validation utilities for Ghost posts."""
+"""Content validation utilities for Ghost posts and pages."""
 
 import json
 import re
@@ -23,7 +23,7 @@ class HTMLValidator(HTMLParser):
         }
         self.self_closing_tags: Set[str] = {'br', 'hr', 'img'}
 
-    def handle_starttag(self, tag: str, attrs: List[tuple]) -> None:
+    def handle_starttag(self, tag: str, attrs: List[tuple]) -> None:  # noqa: ARG002
         """Handle opening tags."""
         if tag not in self.valid_tags:
             self.errors.append(f"Invalid HTML tag: <{tag}>")
@@ -265,12 +265,12 @@ def validate_content_format(content_format: str) -> str:
     return format_lower
 
 
-def validate_post_status(status: str) -> str:
+def validate_status(status: str) -> str:
     """
-    Validate post status parameter.
+    Validate content status parameter.
 
     Args:
-        status: Post status
+        status: Content status
 
     Returns:
         Validated status
@@ -280,7 +280,7 @@ def validate_post_status(status: str) -> str:
     """
     if not status or not isinstance(status, str):
         raise ValidationError(
-            "Post status must be specified",
+            "Content status must be specified",
             context="Valid values: 'draft', 'published', 'scheduled'"
         )
 
@@ -289,19 +289,19 @@ def validate_post_status(status: str) -> str:
 
     if status_lower not in valid_statuses:
         raise ValidationError(
-            f"Invalid post status: '{status}'",
+            f"Invalid content status: '{status}'",
             context=f"Valid values: {', '.join(valid_statuses)}"
         )
 
     return status_lower
 
 
-def validate_post_title(title: str) -> str:
+def validate_title(title: str) -> str:
     """
-    Validate post title.
+    Validate content title.
 
     Args:
-        title: Post title
+        title: Content title
 
     Returns:
         Cleaned title
@@ -311,20 +311,20 @@ def validate_post_title(title: str) -> str:
     """
     if not title or not isinstance(title, str):
         raise ValidationError(
-            "Post title is required",
-            context="Provide a descriptive title for your post"
+            "Title is required",
+            context="Provide a descriptive title for your content"
         )
 
     cleaned_title = title.strip()
     if not cleaned_title:
         raise ValidationError(
-            "Post title cannot be empty or whitespace only",
-            context="Provide a meaningful title for your post"
+            "Title cannot be empty or whitespace only",
+            context="Provide a meaningful title for your content"
         )
 
     if len(cleaned_title) > 255:
         raise ValidationError(
-            f"Post title too long: {len(cleaned_title)} characters (max: 255)",
+            f"Title too long: {len(cleaned_title)} characters (max: 255)",
             context="Shorten the title to 255 characters or less"
         )
 
@@ -368,9 +368,9 @@ def validate_published_at(published_at: Optional[str]) -> Optional[str]:
     return published_at
 
 
-def validate_post_content(content: Optional[str], content_format: str) -> Optional[Union[str, Dict[str, Any]]]:
+def validate_content(content: Optional[str], content_format: str) -> Optional[Union[str, Dict[str, Any]]]:
     """
-    Validate post content based on format.
+    Validate content based on format.
 
     Args:
         content: Content string (HTML or Lexical JSON)
@@ -398,6 +398,92 @@ def validate_post_content(content: Optional[str], content_format: str) -> Option
         f"Unsupported content format: {content_format}",
         context="This is an internal error"
     )
+
+
+def validate_meta_title(meta_title: str) -> str:
+    """
+    Validate meta title for SEO.
+
+    Args:
+        meta_title: Meta title string
+
+    Returns:
+        Cleaned meta title
+
+    Raises:
+        ValidationError: If meta title is invalid
+    """
+    if not meta_title or not isinstance(meta_title, str):
+        raise ValidationError(
+            "Meta title must be a non-empty string",
+            context="Provide an SEO-optimized title for search engines"
+        )
+
+    cleaned_meta_title = meta_title.strip()
+    if not cleaned_meta_title:
+        raise ValidationError(
+            "Meta title cannot be empty or whitespace only",
+            context="Provide a meaningful meta title for SEO"
+        )
+
+    if len(cleaned_meta_title) > 300:
+        raise ValidationError(
+            f"Meta title too long: {len(cleaned_meta_title)} characters (max: 300)",
+            context="Keep meta titles under 300 characters for optimal SEO"
+        )
+
+    return cleaned_meta_title
+
+
+def validate_meta_description(meta_description: str) -> str:
+    """
+    Validate meta description for SEO.
+
+    Args:
+        meta_description: Meta description string
+
+    Returns:
+        Cleaned meta description
+
+    Raises:
+        ValidationError: If meta description is invalid
+    """
+    if not meta_description or not isinstance(meta_description, str):
+        raise ValidationError(
+            "Meta description must be a non-empty string",
+            context="Provide an SEO-optimized description for search engines"
+        )
+
+    cleaned_meta_description = meta_description.strip()
+    if not cleaned_meta_description:
+        raise ValidationError(
+            "Meta description cannot be empty or whitespace only",
+            context="Provide a meaningful meta description for SEO"
+        )
+
+    if len(cleaned_meta_description) > 500:
+        raise ValidationError(
+            f"Meta description too long: {len(cleaned_meta_description)} characters (max: 500)",
+            context="Keep meta descriptions under 500 characters for optimal SEO"
+        )
+
+    return cleaned_meta_description
+
+
+# Backward compatibility aliases for posts
+def validate_post_title(title: str) -> str:
+    """Validate post title (backward compatibility alias)."""
+    return validate_title(title)
+
+
+def validate_post_status(status: str) -> str:
+    """Validate post status (backward compatibility alias)."""
+    return validate_status(status)
+
+
+def validate_post_content(content: Optional[str], content_format: str) -> Optional[Union[str, Dict[str, Any]]]:
+    """Validate post content (backward compatibility alias)."""
+    return validate_content(content, content_format)
 
 
 def get_content_format_examples() -> Dict[str, str]:

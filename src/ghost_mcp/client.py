@@ -162,7 +162,18 @@ class GhostClient:
 
         # Check for successful response
         if response.status_code < 400:
+            # Handle 204 No Content (typical for DELETE operations)
+            if response.status_code == 204:
+                logger.debug("Received 204 No Content response", request_id=request_id)
+                return {}  # Return empty dict for successful delete
+
+            # Try to parse JSON for other successful responses
             try:
+                # Check if response has content before parsing
+                if not response.content:
+                    logger.debug("Received empty response body", request_id=request_id)
+                    return {}
+
                 data = response.json()
                 logger.debug("Successfully parsed response JSON", request_id=request_id)
                 return data
