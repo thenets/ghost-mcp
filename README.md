@@ -29,6 +29,16 @@ Standard config works in most of the tools:
 }
 ```
 
+### Install on Claude Code
+
+```bash
+claude mcp add ghost --scope user \
+  -e GHOST_URL=http://localhost:2368 \
+  -e GHOST_CONTENT_API_KEY=your_content_api_key_here \
+  -e GHOST_ADMIN_API_KEY=your_admin_api_key_here \
+  -- uvx --refresh --from git+https://git.thenets.org/luiz/ghost-mcp.git ghost-mcp
+```
+
 ### Creating API Keys
 
 To create the required API keys for your Ghost instance:
@@ -53,7 +63,7 @@ make setup  # This will start Ghost, create tokens, and configure everything
 - **Configuration Management**: Environment variables with precedence
 - **Development Tools**: Complete Docker setup and automation scripts
 
-## 🚀 Quick Start
+## 🛠️ Development
 
 ### Prerequisites
 
@@ -71,11 +81,11 @@ cd ghost-mcp
 make setup
 
 # Or step by step:
-make install-uv          # Install uv package manager
+make install-uv         # Install uv package manager
 make install            # Install Python dependencies
 make start-ghost        # Start Ghost and database
 make setup-tokens       # Extract API keys and create .env
-make test              # Test the implementation
+make test               # Test the implementation
 ```
 
 ### Usage
