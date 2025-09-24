@@ -25,9 +25,6 @@ For most MCP clients, use this configuration:
     "ghost": {
       "command": "uvx",
       "args": [
-        "--refresh",
-        "--from",
-        "git+https://github.com/thenets/ghost-mcp.git",
         "ghost-mcp"
       ],
       "env": {
