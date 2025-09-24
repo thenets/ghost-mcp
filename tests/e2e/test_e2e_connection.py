@@ -63,12 +63,11 @@ class TestConnectionE2E(BaseE2ETest):
         assert "settings" in response
         settings = response["settings"]
 
-        # Check for some expected settings
-        setting_keys = [setting["key"] for setting in settings]
+        # Check for some expected settings - settings is a dict, not a list
         expected_keys = ["title", "description", "url"]
 
         for key in expected_keys:
-            assert key in setting_keys
+            assert key in settings
 
     async def test_api_version_compatibility(self, ghost_client):
         """Test that the API version is compatible."""

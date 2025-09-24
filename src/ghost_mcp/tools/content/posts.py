@@ -9,6 +9,44 @@ from ...client import GhostClient
 from ...utils.validation import validate_filter_syntax, validate_id_parameter, validate_slug_parameter
 
 
+async def search_posts(
+    query: str,
+    limit: Optional[int] = None,
+    include: Optional[str] = None,
+) -> str:
+    """
+    Search posts by title and content.
+
+    Args:
+        query: Search query string
+        limit: Number of results to return (1-50, default: 15)
+        include: Comma-separated list of fields to include
+
+    Returns:
+        JSON string containing matching posts
+    """
+    if not query or not query.strip():
+        return json.dumps({"error": "Query parameter is required"})
+
+    if limit is not None and (limit < 1 or limit > 50):
+        return json.dumps({"error": "Limit must be between 1 and 50"})
+
+    try:
+        # Use Ghost's filter syntax for searching
+        search_filter = f"title:~'{query}',plaintext:~'{query}'"
+
+        async with GhostClient() as client:
+            result = await client.get_posts(
+                limit=limit,
+                filter=search_filter,
+                include=include,
+            )
+            return json.dumps(result, indent=2, default=str)
+
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+
 def register_post_tools(mcp: FastMCP) -> None:
     """Register post-related Content API tools."""
 
@@ -122,40 +160,5 @@ def register_post_tools(mcp: FastMCP) -> None:
         except Exception as e:
             return json.dumps({"error": str(e)})
 
-    @mcp.tool()
-    async def search_posts(
-        query: str,
-        limit: Optional[int] = None,
-        include: Optional[str] = None,
-    ) -> str:
-        """
-        Search posts by title and content.
-
-        Args:
-            query: Search query string
-            limit: Number of results to return (1-50, default: 15)
-            include: Comma-separated list of fields to include
-
-        Returns:
-            JSON string containing matching posts
-        """
-        if not query or not query.strip():
-            return json.dumps({"error": "Query parameter is required"})
-
-        if limit is not None and (limit < 1 or limit > 50):
-            return json.dumps({"error": "Limit must be between 1 and 50"})
-
-        try:
-            # Use Ghost's filter syntax for searching
-            search_filter = f"title:~'{query}',plaintext:~'{query}'"
-
-            async with GhostClient() as client:
-                result = await client.get_posts(
-                    limit=limit,
-                    filter=search_filter,
-                    include=include,
-                )
-                return json.dumps(result, indent=2, default=str)
-
-        except Exception as e:
-            return json.dumps({"error": str(e)})
+    # Register the standalone search_posts function as an MCP tool
+    mcp.tool()(search_posts)

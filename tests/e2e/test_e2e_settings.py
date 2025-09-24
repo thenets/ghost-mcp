@@ -20,16 +20,17 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
 
         # Verify response structure
         assert "settings" in response
-        assert isinstance(response["settings"], list)
+        assert isinstance(response["settings"], dict)
 
         # Should have multiple settings
         assert len(response["settings"]) > 0
 
-        # Verify settings structure
-        setting = response["settings"][0]
-        essential_fields = ["key", "value"]
-        for field in essential_fields:
-            assert field in setting
+        # Verify settings structure - settings is a dict with direct key-value pairs
+        settings = response["settings"]
+        # Check for some expected settings keys
+        expected_keys = ["title", "description", "url"]
+        for key in expected_keys:
+            assert key in settings
 
     async def test_get_settings_essential_keys(self, mcp_server):
         """Test that essential settings keys are present."""
@@ -40,7 +41,7 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         response = json.loads(result)
 
         # Extract all setting keys
-        setting_keys = [setting["key"] for setting in response["settings"]]
+        setting_keys = list(response["settings"].keys())
 
         # Essential settings that should be present
         essential_keys = [
@@ -64,10 +65,10 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         response = json.loads(result)
 
         # Check data types for each setting
-        for setting in response["settings"]:
-            assert isinstance(setting["key"], str), f"Setting key should be string: {setting}"
-            # Value can be string, bool, or null
-            assert setting["value"] is None or isinstance(setting["value"], (str, bool, int))
+        for key, value in response["settings"].items():
+            assert isinstance(key, str), f"Setting key should be string: {key}"
+            # Value can be string, bool, int, list, or null
+            assert value is None or isinstance(value, (str, bool, int, list, dict))
 
     async def test_get_settings_site_title(self, mcp_server):
         """Test that site title setting is accessible."""
@@ -77,13 +78,12 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         result = await get_settings()
         response = json.loads(result)
 
-        # Find title setting
-        title_settings = [s for s in response["settings"] if s["key"] == "title"]
-        assert len(title_settings) == 1, "Should have exactly one title setting"
+        # Check title setting
+        assert "title" in response["settings"], "Should have title setting"
 
-        title_setting = title_settings[0]
-        assert isinstance(title_setting["value"], str)
-        assert len(title_setting["value"]) > 0, "Site title should not be empty"
+        title_value = response["settings"]["title"]
+        assert isinstance(title_value, str)
+        assert len(title_value) > 0, "Site title should not be empty"
 
     async def test_get_settings_site_url(self, mcp_server):
         """Test that site URL setting is accessible and valid."""
@@ -93,14 +93,13 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         result = await get_settings()
         response = json.loads(result)
 
-        # Find url setting
-        url_settings = [s for s in response["settings"] if s["key"] == "url"]
-        assert len(url_settings) == 1, "Should have exactly one url setting"
+        # Check url setting
+        assert "url" in response["settings"], "Should have url setting"
 
-        url_setting = url_settings[0]
-        assert isinstance(url_setting["value"], str)
-        assert url_setting["value"].startswith("http"), "Site URL should start with http"
-        assert "localhost:2368" in url_setting["value"], "Should be localhost test instance"
+        url_value = response["settings"]["url"]
+        assert isinstance(url_value, str)
+        assert url_value.startswith("http"), "Site URL should start with http"
+        assert "localhost:2368" in url_value, "Should be localhost test instance"
 
     async def test_get_site_info(self, mcp_server):
         """Test getting basic site information."""
@@ -111,8 +110,8 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         response = json.loads(result)
 
         # Verify response structure
-        assert "site" in response
-        site = response["site"]
+        assert "site_info" in response
+        site = response["site_info"]
 
         # Verify essential site info fields
         essential_fields = ["title", "url", "version"]
@@ -131,10 +130,8 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         settings_response = json.loads(settings_result)
 
         # Extract titles
-        site_title = site_info_response["site"]["title"]
-
-        title_settings = [s for s in settings_response["settings"] if s["key"] == "title"]
-        settings_title = title_settings[0]["value"]
+        site_title = site_info_response["site_info"]["title"]
+        settings_title = settings_response["settings"]["title"]
 
         # Titles should match
         assert site_title == settings_title, "Site info title should match settings title"
@@ -151,10 +148,8 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         settings_response = json.loads(settings_result)
 
         # Extract URLs
-        site_url = site_info_response["site"]["url"]
-
-        url_settings = [s for s in settings_response["settings"] if s["key"] == "url"]
-        settings_url = url_settings[0]["value"]
+        site_url = site_info_response["site_info"]["url"]
+        settings_url = settings_response["settings"]["url"]
 
         # URLs should match
         assert site_url == settings_url, "Site info URL should match settings URL"
@@ -167,7 +162,7 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         result = await get_site_info()
         response = json.loads(result)
 
-        site = response["site"]
+        site = response["site_info"]
         version = site["version"]
 
         # Version should be a non-empty string
@@ -186,7 +181,7 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         response = json.loads(result)
 
         # Extract all setting keys
-        setting_keys = [setting["key"] for setting in response["settings"]]
+        setting_keys = list(response["settings"].keys())
 
         # Keys that should NOT be present in public settings
         sensitive_keys = [
@@ -245,12 +240,9 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         result = await get_settings()
         response = json.loads(result)
 
-        # Find timezone setting
-        timezone_settings = [s for s in response["settings"] if s["key"] == "timezone"]
-
-        if timezone_settings:  # timezone might not always be present
-            timezone_setting = timezone_settings[0]
-            timezone_value = timezone_setting["value"]
+        # Check timezone setting
+        if "timezone" in response["settings"]:  # timezone might not always be present
+            timezone_value = response["settings"]["timezone"]
 
             # Should be a string
             assert isinstance(timezone_value, str)
@@ -275,12 +267,9 @@ class TestSettingsContentAPIE2E(BaseE2ETest):
         result = await get_settings()
         response = json.loads(result)
 
-        # Find locale setting
-        locale_settings = [s for s in response["settings"] if s["key"] == "locale"]
-
-        if locale_settings:  # locale might not always be present
-            locale_setting = locale_settings[0]
-            locale_value = locale_setting["value"]
+        # Check locale setting
+        if "locale" in response["settings"]:  # locale might not always be present
+            locale_value = response["settings"]["locale"]
 
             # Should be a string
             assert isinstance(locale_value, str)

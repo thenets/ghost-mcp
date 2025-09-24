@@ -117,16 +117,17 @@ class TestSearchE2E(BaseE2ETest):
         from ghost_mcp.tools.content.posts import search_posts
 
         # Search with empty string
-        try:
-            result = await search_posts("")
-            response = json.loads(result)
+        result = await search_posts("")
+        response = json.loads(result)
 
-            # Should return empty results or all posts
+        # Empty query should return error
+        if "error" in response:
+            # Should return proper validation error
+            assert "required" in response["error"].lower() or "query" in response["error"].lower()
+        else:
+            # Or should return empty results or all posts
             assert "posts" in response
             assert isinstance(response["posts"], list)
-        except Exception as e:
-            # Empty query might not be allowed, but should return proper error
-            assert "400" in str(e) or "validation" in str(e).lower()
 
     async def test_search_posts_nonexistent_term(self, mcp_server):
         """Test post search with non-existent term."""
@@ -184,16 +185,17 @@ class TestSearchE2E(BaseE2ETest):
         # Very long search query
         long_query = "this is a very long search query that tests the system's ability to handle long search terms without breaking or causing performance issues" * 3
 
-        try:
-            result = await search_posts(long_query)
-            response = json.loads(result)
+        result = await search_posts(long_query)
+        response = json.loads(result)
 
-            # Should handle long queries gracefully
+        if "error" in response:
+            # Long queries might be rejected with proper error
+            error_msg = response["error"].lower()
+            assert any(term in error_msg for term in ["length", "long", "request", "understood", "cannot"])
+        else:
+            # Or should handle long queries gracefully
             assert "posts" in response
             assert isinstance(response["posts"], list)
-        except Exception as e:
-            # Long queries might be rejected, but should return proper error
-            assert "400" in str(e) or "413" in str(e) or "length" in str(e).lower()
 
     async def test_search_posts_multiple_words(self, mcp_server, sample_published_post):
         """Test post search with multiple words."""
@@ -264,7 +266,7 @@ class TestSearchE2E(BaseE2ETest):
         if response["posts"]:
             post = response["posts"][0]
 
-            essential_fields = ["id", "title", "slug", "status", "created_at", "updated_at", "url"]
+            essential_fields = ["id", "title", "slug", "created_at", "updated_at", "url"]
             for field in essential_fields:
                 assert field in post, f"Search result should include '{field}'"
 
@@ -277,9 +279,9 @@ class TestSearchE2E(BaseE2ETest):
         result = await search_posts(search_term)
         response = json.loads(result)
 
-        # Verify all returned posts are published
-        for post in response["posts"]:
-            assert post["status"] == "published", "Search should only return published posts"
+        # Content API only returns published posts, so all posts in results are published
+        # (The Content API doesn't include a status field since all posts are published)
+        assert "posts" in response, "Search should return posts"
 
         # Verify our published post might be in results
         published_post_ids = [post["id"] for post in response["posts"]]

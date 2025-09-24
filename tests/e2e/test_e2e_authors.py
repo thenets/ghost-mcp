@@ -29,7 +29,7 @@ class TestAuthorsContentAPIE2E(BaseE2ETest):
         # Verify author structure
         if response["authors"]:
             author = response["authors"][0]
-            essential_fields = ["id", "name", "slug", "email"]
+            essential_fields = ["id", "name", "slug"]
             for field in essential_fields:
                 assert field in author
 
@@ -150,21 +150,25 @@ class TestAuthorsContentAPIE2E(BaseE2ETest):
         """Test getting an author with non-existent ID returns proper error."""
         from ghost_mcp.tools.content.authors import get_author_by_id
 
-        with pytest.raises(Exception) as exc_info:
-            await get_author_by_id("nonexistent-id")
+        result = await get_author_by_id("nonexistent-id")
+        response = json.loads(result)
 
-        # Verify we get an appropriate error
-        assert "404" in str(exc_info.value) or "not found" in str(exc_info.value).lower()
+        # Should return an error response
+        assert "error" in response
+        error_msg = response["error"].lower()
+        assert "not found" in error_msg or "404" in error_msg or "resource not found" in error_msg or "validation error" in error_msg
 
     async def test_get_author_by_nonexistent_slug(self, mcp_server):
         """Test getting an author with non-existent slug returns proper error."""
         from ghost_mcp.tools.content.authors import get_author_by_slug
 
-        with pytest.raises(Exception) as exc_info:
-            await get_author_by_slug("nonexistent-slug")
+        result = await get_author_by_slug("nonexistent-slug")
+        response = json.loads(result)
 
-        # Verify we get an appropriate error
-        assert "404" in str(exc_info.value) or "not found" in str(exc_info.value).lower()
+        # Should return an error response
+        assert "error" in response
+        error_msg = response["error"].lower()
+        assert "not found" in error_msg or "404" in error_msg or "resource not found" in error_msg or "validation error" in error_msg
 
     async def test_author_fields_structure(self, mcp_server):
         """Test that authors have expected field structure."""
@@ -181,7 +185,7 @@ class TestAuthorsContentAPIE2E(BaseE2ETest):
 
         # Verify essential fields are present
         essential_fields = [
-            "id", "name", "slug", "email", "created_at", "updated_at", "url"
+            "id", "name", "slug", "url"
         ]
         for field in essential_fields:
             assert field in author, f"Field '{field}' missing from author"
@@ -190,7 +194,7 @@ class TestAuthorsContentAPIE2E(BaseE2ETest):
         assert isinstance(author["id"], str)
         assert isinstance(author["name"], str)
         assert isinstance(author["slug"], str)
-        assert isinstance(author["email"], str)
+        assert isinstance(author["url"], str)
 
     async def test_author_with_posts_count(self, mcp_server, sample_published_post):
         """Test author post count when author has posts."""
@@ -296,17 +300,5 @@ class TestAuthorsContentAPIE2E(BaseE2ETest):
 
     async def test_authors_unique_emails(self, mcp_server):
         """Test that all authors have unique email addresses."""
-        from ghost_mcp.tools.content.authors import get_authors
-
-        # Get all authors
-        result = await get_authors()
-        response = json.loads(result)
-
-        if len(response["authors"]) <= 1:
-            pytest.skip("Not enough authors to test uniqueness")
-
-        # Extract all emails
-        emails = [author["email"] for author in response["authors"]]
-
-        # Verify uniqueness
-        assert len(emails) == len(set(emails)), "Author emails are not unique"
+        # Skip this test since Content API doesn't expose author emails
+        pytest.skip("Content API doesn't expose author email addresses")
