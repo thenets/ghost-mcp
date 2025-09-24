@@ -2,11 +2,30 @@
 
 A comprehensive Model Context Protocol (MCP) server for Ghost CMS, providing both read-only Content API and read/write Admin API access through FastMCP.
 
+## ⚡ Quick Start
+
+```bash
+# Install and run locally (requires Docker)
+git clone https://git.thenets.org/luiz/ghost-mcp.git
+cd ghost-mcp
+make setup  # Starts Ghost, creates API keys, runs tests
+make run    # Start the MCP server
+```
+
+For Claude Code:
+```bash
+claude mcp add ghost --scope user \
+  -e GHOST_URL=http://localhost:2368 \
+  -e GHOST_CONTENT_API_KEY=your_key_here \
+  -e GHOST_ADMIN_API_KEY=your_key_here \
+  -- uvx --refresh --from git+https://git.thenets.org/luiz/ghost-mcp.git ghost-mcp
+```
+
 ## 🌟 Getting Started
 
-First, install the Ghost MCP server with your client.
+### Standard Configuration
 
-Standard config works in most of the tools:
+For most MCP clients, use this configuration:
 
 ```json
 {
@@ -27,16 +46,6 @@ Standard config works in most of the tools:
     }
   }
 }
-```
-
-### Install on Claude Code
-
-```bash
-claude mcp add ghost --scope user \
-  -e GHOST_URL=http://localhost:2368 \
-  -e GHOST_CONTENT_API_KEY=your_content_api_key_here \
-  -e GHOST_ADMIN_API_KEY=your_admin_api_key_here \
-  -- uvx --refresh --from git+https://git.thenets.org/luiz/ghost-mcp.git ghost-mcp
 ```
 
 ### Creating API Keys
@@ -74,7 +83,7 @@ make setup  # This will start Ghost, create tokens, and configure everything
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://git.thenets.org/luiz/ghost-mcp.git
 cd ghost-mcp
 
 # Complete setup from scratch
@@ -102,6 +111,42 @@ make status
 
 # View container logs
 make logs
+```
+
+### Project Structure
+
+```
+ghost-mcp/
+├── src/ghost_mcp/
+│   ├── server.py           # FastMCP server entry point
+│   ├── client.py           # Ghost API client
+│   ├── config.py           # Configuration management
+│   ├── auth/               # Authentication modules
+│   ├── tools/
+│   │   ├── content/        # Content API tools
+│   │   └── admin/          # Admin API tools
+│   ├── types/              # Type definitions
+│   └── utils/              # Utilities
+├── scripts/                # Setup and test scripts
+├── contracts/              # API documentation
+├── docker-compose.yml      # Ghost + MySQL setup
+├── Makefile               # Development commands
+└── pyproject.toml         # Python project config
+```
+
+### Available Commands
+
+```bash
+make help               # Show all commands
+make setup              # Complete setup from scratch
+make install            # Install dependencies with uv
+make start-ghost        # Start Ghost containers
+make setup-tokens       # Generate API keys
+make test               # Run tests
+make test-connection    # Test API connectivity
+make run                # Run MCP server
+make status             # Check system status
+make clean              # Clean up everything
 ```
 
 ## 📋 Available MCP Tools
@@ -167,43 +212,6 @@ LOG_STRUCTURED=true
 LOG_REQUEST_ID=true
 ```
 
-## 🛠️ Development
-
-### Project Structure
-
-```
-ghost-mcp/
-├── src/ghost_mcp/
-│   ├── server.py           # FastMCP server entry point
-│   ├── client.py           # Ghost API client
-│   ├── config.py           # Configuration management
-│   ├── auth/               # Authentication modules
-│   ├── tools/
-│   │   ├── content/        # Content API tools
-│   │   └── admin/          # Admin API tools
-│   ├── types/              # Type definitions
-│   └── utils/              # Utilities
-├── scripts/                # Setup and test scripts
-├── contracts/              # API documentation
-├── docker-compose.yml      # Ghost + MySQL setup
-├── Makefile               # Development commands
-└── pyproject.toml         # Python project config
-```
-
-### Available Commands
-
-```bash
-make help                # Show all commands
-make setup              # Complete setup from scratch
-make install            # Install dependencies with uv
-make start-ghost        # Start Ghost containers
-make setup-tokens       # Generate API keys
-make test              # Run tests
-make test-connection    # Test API connectivity
-make run               # Run MCP server
-make status            # Check system status
-make clean             # Clean up everything
-```
 
 ## 🐳 Docker Environment
 
@@ -258,7 +266,7 @@ make test-connection
 make test
 
 # Test specific functionality
-python scripts/test-connection.py
+make test-connection
 ```
 
 ## 📝 Logging
