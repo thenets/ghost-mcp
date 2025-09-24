@@ -25,15 +25,15 @@ deps-deps-install-uv: ## Install uv package manager
 	fi
 
 # Install the MCP server system-wide
-install: ## Install the MCP server system-wide
-	claude mcp remove ghost-mcp -s user || true
-	claude mcp add ghost-mcp -s user -- \
+install-user: ## Install the MCP server system-wide
+	claude mcp remove ghost -s user || true
+	claude mcp add ghost -s user -- \
 		bash -c "cd $(PWD) && uv run python -m ghost_mcp.server"
 
 # Install the MCP server in the project scope only
-install-local: ## Install the MCP server in the project scope only
-	claude mcp remove ghost-mcp || true
-	claude mcp add ghost-mcp -- \
+install-project: ## Install the MCP server in the project scope only
+	claude mcp remove -s project ghost || true
+	claude mcp add ghost -s project -- \
 		bash -c "cd $(PWD) && uv run python -m ghost_mcp.server"
 
 deps-install-python: ## Install Python dependencies using uv

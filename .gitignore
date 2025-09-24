@@ -53,3 +53,6 @@ Thumbs.db
 .coverage
 htmlcov/
 .tox/
+
+# Claude Code
+.mcp.json
