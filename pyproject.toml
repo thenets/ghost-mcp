@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ghost-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "Ghost CMS MCP server providing comprehensive Ghost API access"
 authors = [{name = "Ghost MCP Team"}]
 readme = "README.md"
